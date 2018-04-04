@@ -3,38 +3,41 @@ require 'omniauth-oauth2'
 module OmniAuth
   module Strategies
     class Fieldview < OmniAuth::Strategies::OAuth2
-      # Give your strategy a name.
       option :name, :fieldview
 
-      # This is where you pass the options you would pass when
-      # initializing your consumer from the OAuth gem.
       option :client_options, {
-      	:site => "https://api.climate.com", 
-      	authorize_url: 'https://climate.com/static/app-login/'
+      	site: "https://api.climate.com", 
+      	authorize_url: 'https://climate.com/static/app-login/',
+        token_url: '/api/oauth/token'
      	}
 
-      # These are called after authentication has succeeded. If
-      # possible, you should try to set the UID without making
-      # additional calls (if the user id is returned with the token
-      # or as a URI parameter). This may not be possible with all
-      # providers.
-      uid{ raw_info['id'] }
+      uid{ raw_info['uuid'] }
 
       info do
-        {
-          :name => raw_info['name'],
-          :email => raw_info['email']
-        }
+         {
+           first_name: raw_info['firstname'],
+           last_name: raw_info['lastname'],
+           email: raw_info['email']
+         }
       end
 
       extra do
-        {
-          'raw_info' => raw_info
-        }
+         {
+           raw_info: raw_info
+         }
       end
 
       def raw_info
-        @raw_info ||= access_token.get('/me').parsed
+         @raw_info ||= access_token.params["user"]
+      end
+
+      def build_access_token
+        options.token_params.merge!(:headers => {'Authorization' => basic_auth_header })
+        super
+      end
+
+      def basic_auth_header
+        "Basic " + Base64.strict_encode64("#{options[:client_id]}:#{options[:client_secret]}")
       end
     end
   end
