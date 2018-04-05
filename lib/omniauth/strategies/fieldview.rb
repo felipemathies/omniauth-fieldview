@@ -8,7 +8,8 @@ module OmniAuth
       option :client_options, {
       	site: "https://api.climate.com", 
       	authorize_url: 'https://climate.com/static/app-login/',
-        token_url: '/api/oauth/token'
+        token_url: '/api/oauth/token',
+        auth_scheme: :basic_auth
      	}
 
       uid{ raw_info['uuid'] }
@@ -29,15 +30,6 @@ module OmniAuth
 
       def raw_info
          @raw_info ||= access_token.params["user"]
-      end
-
-      def build_access_token
-        options.token_params.merge!(:headers => {'Authorization' => basic_auth_header })
-        super
-      end
-
-      def basic_auth_header
-        "Basic " + Base64.strict_encode64("#{options[:client_id]}:#{options[:client_secret]}")
       end
     end
   end
